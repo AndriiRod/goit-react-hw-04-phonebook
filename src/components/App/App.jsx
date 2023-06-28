@@ -1,5 +1,8 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
+
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import Phonebook from 'components/Phonebook/';
 import AddContactForm from 'components/AddContactForm/';
@@ -8,92 +11,76 @@ import FindField from 'components/FindField/';
 
 import users from '../../users.json';
 
-class App extends Component {
-  state = {
-    currentPage: 'addContact',
-    contacts: users,
-    filter: '',
+const App = () => {
+  const [filter, setFilter] = useState('');
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(window.localStorage.getItem('contacts')) ?? users
+  );
+  const [currentPage, setCurrentPage] = useState('addContact');
+
+  useEffect(() => {
+    window.localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const handlePageChange = () => {
+    setCurrentPage(prevPage =>
+      prevPage === 'addContact' ? 'contacts' : 'addContact'
+    );
   };
 
-  componentDidMount() {
-    const contactsLS = JSON.parse(localStorage.getItem('contacts'));
-    if (contactsLS) {
-      this.setState({ contacts: contactsLS });
-    }
-  }
-
-  componentDidUpdate(_, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  addNewContact = data => {
-    const newItem = {
-      id: nanoid(5),
-      ...data,
-    };
-    this.setState(({ contacts }) => ({
-      contacts: [newItem, ...contacts],
-    }));
-  };
-
-  checkingForMatches = data => {
+  const checkingForMatches = data => {
     const { name } = data;
-    const matches = this.state.contacts.find(item => item.name === name);
+    const matches = contacts.find(item => item.name === name);
     if (matches) {
-      alert(
+      toast.info(
         `${name.charAt(0).toUpperCase() + name.slice(1)} is already in contacts`
       );
       return;
     }
-    this.addNewContact(data);
+    addNewContact(data);
   };
 
-  changeFilter = e => {
-    this.setState({ filter: e.currentTarget.value });
+  const addNewContact = data => {
+    const newItem = {
+      id: nanoid(5),
+      ...data,
+    };
+    setContacts(prevContacts => [newItem, ...prevContacts]);
   };
 
-  getVisibleContacts = () => {
-    const { filter, contacts } = this.state;
+  const deleteContact = contactId => {
+    setContacts(prevContacts =>
+      prevContacts.filter(({ id }) => id !== contactId)
+    );
+  };
+
+  const changeFilter = e => {
+    setFilter(e.target.value);
+  };
+
+  const getVisibleContacts = () => {
     const normalizeFilter = filter.toLowerCase();
     return contacts.filter(({ name }) =>
       name.toLowerCase().includes(normalizeFilter)
     );
   };
 
-  deleteContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(({ id }) => id !== contactId),
-    }));
-  };
-  handlePageChange = () => {
-    this.setState(prevState => ({
-      currentPage:
-        prevState.currentPage === 'addContact' ? 'contacts' : 'addContact',
-    }));
-  };
-
-  render() {
-    return (
-      <Phonebook title="Phonebook" changePage={this.handlePageChange}>
-        {this.state.currentPage === 'addContact' && (
-          <AddContactForm checkingForMatches={this.checkingForMatches} />
-        )}
-        {this.state.currentPage === 'contacts' && (
-          <Contacts
-            contacts={this.getVisibleContacts()}
-            onDeleteContact={this.deleteContact}
-          >
-            <FindField
-              value={this.state.filter}
-              changeFilter={this.changeFilter}
-            />
-          </Contacts>
-        )}
-      </Phonebook>
-    );
-  }
-}
+  return (
+    <Phonebook title="Phonebook" changePage={handlePageChange}>
+      {currentPage === 'addContact' && (
+        <AddContactForm checkingForMatches={checkingForMatches} />
+      )}
+      {currentPage === 'contacts' && (
+        <Contacts
+          contacts={getVisibleContacts()}
+          onDeleteContact={deleteContact}
+        >
+          <FindField value={filter} changeFilter={changeFilter} />
+        </Contacts>
+      )}
+      <ToastContainer theme="colored" />
+    </Phonebook>
+  );
+};
 
 export default App;

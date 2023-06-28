@@ -21,5 +21,6 @@ const Phonebook = ({ title, changePage, children }) => {
 export default Phonebook;
 
 Phonebook.propTypes = {
+  changePage: PropTypes.func,
   title: PropTypes.string,
 };

@@ -1,60 +1,50 @@
-import { Formik, ErrorMessage } from 'formik';
-import { nanoid } from 'nanoid';
-
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 import schema from 'components/schema';
 
-import {
-  FormWrap,
-  SubTitle,
-  Label,
-  Input,
-  FormBtn,
-  ErrorText,
-  InputContainer,
-} from './AddContactForm.styled';
+import { nanoid } from 'nanoid';
 
-const ErrorBox = ({ name }) => {
-  return (
-    <ErrorMessage
-      name={name}
-      render={message => <ErrorText>{message}</ErrorText>}
-    />
-  );
-};
+import { Form, SubTitle, Label, Input, FormBtn } from './AddContactForm.styled';
 
 const AddContactForm = ({ checkingForMatches }) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: '',
+      number: '',
+    },
+    resolver: yupResolver(schema),
+  });
   const inputNameId = nanoid(6);
   const inputNumberId = nanoid(6);
 
-  const initialValues = {
-    name: '',
-    number: '',
-  };
-  const handleSubmit = (values, { resetForm }) => {
-    checkingForMatches(values);
-    resetForm();
+  const handleSubmitForm = data => {
+    checkingForMatches(data);
+    reset();
   };
   return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      validationSchema={schema}
-    >
-      <FormWrap>
-        <SubTitle>Add</SubTitle>
-        <Label htmlFor={inputNameId}>Name</Label>
-        <InputContainer>
-          <Input id={inputNameId} type="text" name="name" />
-          <ErrorBox name="name" component="div" />
-        </InputContainer>
-        <Label htmlFor={inputNumberId}>Number</Label>
-        <InputContainer>
-          <Input id={inputNumberId} type="tel" name="number" />
-          <ErrorBox name="number" component="div" />
-        </InputContainer>
-        <FormBtn type="submit">Add contact</FormBtn>
-      </FormWrap>
-    </Formik>
+    <Form onSubmit={handleSubmit(handleSubmitForm)}>
+      <SubTitle>Add</SubTitle>
+      <Label htmlFor={inputNameId}>Name</Label>
+      <Input
+        id={inputNameId}
+        type="text"
+        {...register('name', { required: true })}
+      />
+      {errors.name && <span>{errors.name.message}</span>}
+      <Label htmlFor={inputNumberId}>Number</Label>
+      <Input
+        id={inputNumberId}
+        type="tel"
+        {...register('number', { required: true })}
+      />
+      {errors.number && <span>{errors.number.message}</span>}
+      <FormBtn type="submit">Add contact</FormBtn>
+    </Form>
   );
 };
 
