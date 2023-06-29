@@ -50,3 +50,13 @@ export const FormBtn = styled.button`
   border: none;
   border-radius: 2px;
 `;
+
+export const ErrorMessage = styled.div`
+  font-size: 12px;
+  padding: 10px;
+  border: 1px solid #dc143c;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  background-color: #f08080;
+  color: #e0ffff;
+`;
